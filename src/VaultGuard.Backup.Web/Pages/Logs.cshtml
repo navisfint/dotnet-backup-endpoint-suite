@@ -1,0 +1,93 @@
+@page
+@model LogsModel
+@{
+    ViewData["Title"] = "操作日志";
+    string BuildLink(int pageNumber) => $"/Logs?pageIndex={pageNumber}";
+    var startPage = Math.Max(1, Model.CurrentPage - 2);
+    var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+}
+
+<div class="page-header">
+    <div>
+        <h1>操作日志</h1>
+        <div class="subtitle">共 @Model.Total 条记录，每页 @LogsModel.PageSize 条；覆盖登录、主机与任务维护、连通性检测、备份与还原</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">
+        <span>操作记录</span>
+        <span class="text-muted">第 @Model.CurrentPage / @Model.TotalPages 页</span>
+    </div>
+
+    @if (Model.Logs.Count == 0)
+    {
+        <div class="empty">暂无操作日志。</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:160px;">时间</th>
+                        <th style="width:120px;">操作人</th>
+                        <th style="width:130px;">动作</th>
+                        <th style="width:200px;">对象</th>
+                        <th>详情</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model.Logs)
+                    {
+                        <tr>
+                            <td class="col-time">@Row.Str(log, "created_at")</td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(log, "actor")) ? "—" : Row.Str(log, "actor"))</td>
+                            <td><span class="tag">@Row.Str(log, "action")</span></td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(log, "target")) ? "—" : Row.Str(log, "target"))</td>
+                            <td>@Row.Str(log, "detail")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pager">
+            <span class="pager-info">共 @Model.Total 条记录</span>
+
+            @if (Model.CurrentPage > 1)
+            {
+                <a href="@BuildLink(1)">首页</a>
+                <a href="@BuildLink(Model.CurrentPage - 1)">上一页</a>
+            }
+            else
+            {
+                <span class="disabled">首页</span>
+                <span class="disabled">上一页</span>
+            }
+
+            @for (var p = startPage; p <= endPage; p++)
+            {
+                if (p == Model.CurrentPage)
+                {
+                    <span class="current">@p</span>
+                }
+                else
+                {
+                    <a href="@BuildLink(p)">@p</a>
+                }
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a href="@BuildLink(Model.CurrentPage + 1)">下一页</a>
+                <a href="@BuildLink(Model.TotalPages)">末页</a>
+            }
+            else
+            {
+                <span class="disabled">下一页</span>
+                <span class="disabled">末页</span>
+            }
+        </div>
+    }
+</div>

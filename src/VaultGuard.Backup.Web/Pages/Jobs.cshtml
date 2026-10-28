@@ -1,0 +1,191 @@
+@page
+@model JobsModel
+@{
+    ViewData["Title"] = "备份任务";
+    var editing = Model.JobId > 0;
+    var disabled = !Model.Enabled;
+}
+
+<div class="page-header">
+    <div>
+        <h1>备份任务</h1>
+        <div class="subtitle">共 @Model.Jobs.Count 个任务；支持全量 / 差异 / 增量三种模式，「立即执行」为同步执行</div>
+    </div>
+    <a class="btn btn-ghost" asp-page="/Points">查看备份点</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    var cls = Model.MessageKind == "error" ? "alert-error" : (Model.MessageKind == "warn" ? "alert-warn" : "alert-ok");
+    <div class="alert @cls">@Model.Message</div>
+}
+
+<!-- 任务列表 -->
+<div class="card">
+    <div class="card-title">任务列表</div>
+
+    @if (Model.Jobs.Count == 0)
+    {
+        <div class="empty">
+            暂无备份任务。请先在「主机管理」添加主机对象，再在下方新建任务。
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:180px;">任务名称</th>
+                        <th style="width:150px;">主机</th>
+                        <th>数据来源</th>
+                        <th style="width:80px;">模式</th>
+                        <th style="width:210px;">仓库目录</th>
+                        <th style="width:90px;">启用状态</th>
+                        <th style="width:230px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var job in Model.Jobs)
+                    {
+                        var jobId = Row.Long(job, "id");
+                        var mode = Row.Int(job, "mode");
+                        var enabled = Row.Bool(job, "enabled");
+                        <tr>
+                            <td><strong>@Row.Str(job, "name")</strong></td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(job, "host_name")) ? "—" : Row.Str(job, "host_name"))</td>
+                            <td class="path-cell">@Row.Str(job, "sources")</td>
+                            <td><span class="tag @Display.ModeCssClass(mode)">@Display.ModeName(mode)</span></td>
+                            <td class="path-cell">@Row.Str(job, "repo_path")</td>
+                            <td>
+                                <span class="tag @(enabled ? "tag-on" : "tag-off")">@(enabled ? "已启用" : "已停用")</span>
+                            </td>
+                            <td class="actions">
+                                <form method="post" asp-page-handler="Run" style="display:inline;"
+                                      onsubmit="return confirm('立即执行一次备份？执行期间页面会等待完成。');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@jobId" />
+                                    <button type="submit" class="btn btn-sm">立即执行</button>
+                                </form>
+                                <a class="btn btn-sm btn-ghost" asp-page="/Jobs" asp-route-id="@jobId">编辑</a>
+                                <form method="post" asp-page-handler="Delete" style="display:inline;"
+                                      onsubmit="return confirm('确定删除该备份任务？');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@jobId" />
+                                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- 新增 / 编辑表单 -->
+<div class="card">
+    <div class="card-title">@(editing ? $"编辑任务（编号 {Model.JobId}）" : "新建备份任务")</div>
+    <form method="post" asp-page-handler="@(editing ? "Update" : "Create")" id="jobForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="JobId" value="@Model.JobId" />
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="JobName">任务名称</label>
+                <input id="JobName" type="text" name="JobName" value="@Model.JobName" placeholder="例如：财务资料每日备份" />
+            </div>
+            <div class="form-field narrow">
+                <label for="JobType">备份类型</label>
+                <select id="JobType" name="JobType">
+                    <option value="file" selected="@(Model.JobType == "vm" ? null : "selected")">文件备份</option>
+                    <option value="vm" selected="@(Model.JobType == "vm" ? "selected" : null)">虚拟机备份</option>
+                </select>
+            </div>
+            <div class="form-field narrow">
+                <label for="JobHostId">所属主机</label>
+                <select id="JobHostId" name="JobHostId">
+                    <option value="0">请选择主机</option>
+                    @foreach (var host in Model.HostOptions)
+                    {
+                        var hid = Row.Long(host, "id");
+                        <option value="@hid" selected="@(hid == Model.JobHostId ? "selected" : null)">@Row.Str(host, "name")</option>
+                    }
+                </select>
+            </div>
+            <div class="form-field narrow">
+                <label for="Mode">备份模式</label>
+                <select id="Mode" name="Mode">
+                    <option value="0" selected="@(Model.Mode == 0 ? "selected" : null)">全量</option>
+                    <option value="1" selected="@(Model.Mode == 1 ? "selected" : null)">差异</option>
+                    <option value="2" selected="@(Model.Mode == 2 ? "selected" : null)">增量</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 虚拟机备份：按设计约定为有条件实现，选中后给出提示并禁止提交 -->
+        <div id="vmNotice" class="alert alert-warn" style="display:none;">
+            @Model.VmUnavailableReason
+        </div>
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="Sources">数据来源</label>
+                <input id="Sources" type="text" name="Sources" value="@Model.Sources"
+                       placeholder="D:\财务资料;D:\报表 或 \\192.168.1.20\share" />
+                <span class="form-hint">可填本地目录、盘符或 UNC 共享路径，多个用分号分隔</span>
+            </div>
+            <div class="form-field">
+                <label for="RepoPath">备份仓库目录</label>
+                <input id="RepoPath" type="text" name="RepoPath" value="@Model.RepoPath" placeholder="例如：E:\VaultGuardRepo" />
+                <span class="form-hint">备份数据与清单文件的落盘根目录，需有写入权限</span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="Excludes">排除规则</label>
+                <input id="Excludes" type="text" name="Excludes" value="@Model.Excludes" placeholder="*.tmp;*.bak;node_modules" />
+                <span class="form-hint">通配符，多个用分号分隔；命中文件名或目录名即跳过</span>
+            </div>
+            <div class="form-field narrow">
+                <label for="Enabled">启用状态</label>
+                <select id="Enabled" name="Enabled">
+                    <option value="true" selected="@(Model.Enabled ? "selected" : null)">启用</option>
+                    <option value="false" selected="@(!Model.Enabled ? "selected" : null)">停用</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn" id="submitBtn">@(editing ? "保存修改" : "创建任务")</button>
+            @if (editing)
+            {
+                <a class="btn btn-ghost" asp-page="/Jobs">取消编辑</a>
+            }
+        </div>
+    </form>
+</div>
+
+<script>
+    // 选择「虚拟机备份」时显示不适用提示并禁用提交按钮（与服务端校验双保险）
+    (function () {
+        var typeSelect = document.getElementById('JobType');
+        var notice = document.getElementById('vmNotice');
+        var submitBtn = document.getElementById('submitBtn');
+        if (!typeSelect || !notice || !submitBtn) {
+            return;
+        }
+
+        function refresh() {
+            var isVm = typeSelect.value === 'vm';
+            notice.style.display = isVm ? 'block' : 'none';
+            submitBtn.disabled = isVm;
+            submitBtn.style.opacity = isVm ? '0.55' : '1';
+            submitBtn.style.cursor = isVm ? 'not-allowed' : 'pointer';
+        }
+
+        typeSelect.addEventListener('change', refresh);
+        refresh();
+    })();
+</script>

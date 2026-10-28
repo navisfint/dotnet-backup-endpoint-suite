@@ -1,0 +1,147 @@
+@page "{pointId:long}"
+@model RestoreModel
+@{
+    ViewData["Title"] = "还原文件";
+    var point = Model.Point!;
+    var pointId = Row.Long(point, "id");
+    string BuildLink(int pageNumber) => $"/Restore/{pointId}?pageIndex={pageNumber}";
+    var startPage = Math.Max(1, Model.CurrentPage - 2);
+    var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+}
+
+<div class="page-header">
+    <div>
+        <h1>还原文件</h1>
+        <div class="subtitle">
+            备份点 #@Row.Long(point, "id")　@Row.Str(point, "job_name")　@Display.ModeName(Row.Int(point, "mode"))
+            备份　@Row.Str(point, "started_at")
+        </div>
+    </div>
+    <a class="btn btn-ghost" asp-page="/Points">返回备份点列表</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert @(Model.MessageKind == "error" ? "alert-error" : "alert-ok")">@Model.Message</div>
+}
+
+<!-- 备份点概要 -->
+<div class="card">
+    <div class="card-title">备份点信息</div>
+    <div class="kv">
+        <div class="kv-item"><span class="kv-key">来源主机</span><strong>@(string.IsNullOrEmpty(Row.Str(point, "host_name")) ? "—" : Row.Str(point, "host_name"))</strong></div>
+        <div class="kv-item"><span class="kv-key">状态</span><strong>@Row.Str(point, "status")</strong></div>
+        <div class="kv-item"><span class="kv-key">逻辑文件数</span><strong>@Row.Long(point, "total_count")</strong></div>
+        <div class="kv-item"><span class="kv-key">本次复制</span><strong>@Row.Long(point, "copied_count")</strong></div>
+        <div class="kv-item"><span class="kv-key">逻辑大小</span><strong>@Display.Size(Row.Long(point, "total_bytes"))</strong></div>
+        <div class="kv-item"><span class="kv-key">耗时</span><strong>@Display.Elapsed(Row.Double(point, "elapsed_seconds"))</strong></div>
+    </div>
+    <div class="detail-line" style="margin-top:10px;">数据来源：<span class="path-cell">@Row.Str(point, "sources")</span></div>
+</div>
+
+<!-- 文件清单与还原表单 -->
+<div class="card">
+    <div class="card-title">
+        <span>文件清单（共 @Model.TotalCount 个）</span>
+        <span class="text-muted">第 @Model.CurrentPage / @Model.TotalPages 页</span>
+    </div>
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="empty">该备份点没有文件条目，或清单文件已丢失。</div>
+    }
+    else
+    {
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="pointId" value="@Row.Long(point, "id")" />
+
+            <div class="file-toolbar">
+                <label>
+                    <input type="checkbox" onclick="toggleAllFiles(this.checked)" /> 全选本页
+                </label>
+                <span class="text-muted">已勾选 <strong id="selectedCount">0</strong> 个文件</span>
+            </div>
+
+            <div class="table-wrap">
+                <table class="data files">
+                    <thead>
+                        <tr>
+                            <th class="check-col">选择</th>
+                            <th>相对路径</th>
+                            <th class="size">大小</th>
+                            <th class="src">来源备份点</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model.Entries)
+                        {
+                            <tr>
+                                <td class="check-col">
+                                    <input type="checkbox" name="SelectedFiles" value="@entry.RelPath" />
+                                </td>
+                                <td class="path-cell">@entry.RelPath</td>
+                                <td class="size">@Display.Size(entry.Length)</td>
+                                <td class="src">#@entry.SourcePointId</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pager">
+                <span class="pager-info">共 @Model.TotalCount 个条目，每页 @RestoreModel.PageSize 个</span>
+
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="@BuildLink(1)">首页</a>
+                    <a href="@BuildLink(Model.CurrentPage - 1)">上一页</a>
+                }
+                else
+                {
+                    <span class="disabled">首页</span>
+                    <span class="disabled">上一页</span>
+                }
+
+                @for (var p = startPage; p <= endPage; p++)
+                {
+                    if (p == Model.CurrentPage)
+                    {
+                        <span class="current">@p</span>
+                    }
+                    else
+                    {
+                        <a href="@BuildLink(p)">@p</a>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a href="@BuildLink(Model.CurrentPage + 1)">下一页</a>
+                    <a href="@BuildLink(Model.TotalPages)">末页</a>
+                }
+                else
+                {
+                    <span class="disabled">下一页</span>
+                    <span class="disabled">末页</span>
+                }
+            </div>
+
+            <div class="form-row" style="margin-top:16px;">
+                <div class="form-field">
+                    <label for="Target">还原目标目录</label>
+                    <input id="Target" type="text" name="Target" value="@Model.Target"
+                           placeholder="留空则还原到原始位置" />
+                    <span class="form-hint">留空 = 写回各文件的原始绝对位置；填写 = 还原到该目录下并保留相对目录结构</span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn"
+                        onclick="return confirm('确认还原已勾选的文件？同名文件将被覆盖。');">
+                    执行还原
+                </button>
+            </div>
+        </form>
+    }
+</div>

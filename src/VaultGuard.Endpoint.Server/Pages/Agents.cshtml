@@ -1,0 +1,83 @@
+@page
+@model AgentsModel
+@{
+    ViewData["Title"] = "终端管理";
+}
+
+<div class="page-header">
+    <div>
+        <h1>终端管理</h1>
+        <div class="subtitle">共 @Model.Agents.Count 台终端对象；终端在线状态由心跳时间判定，心跳间隔 30 秒</div>
+    </div>
+    <a class="btn btn-ghost" asp-page="/Events">查看审计日志</a>
+</div>
+
+<div class="card">
+    <div class="card-title">终端对象列表</div>
+
+    @if (Model.Agents.Count == 0)
+    {
+        <div class="empty">
+            暂无终端接入。请在目标计算机上启动「终端安全准入与行为审计系统」终端代理程序，
+            代理会自动注册并出现在本列表中。
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:160px;">主机名</th>
+                        <th style="width:140px;">IP 地址</th>
+                        <th style="width:220px;">系统版本</th>
+                        <th style="width:100px;">状态</th>
+                        <th style="width:170px;">最后心跳</th>
+                        <th>策略摘要</th>
+                        <th style="width:110px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var agent in Model.Agents)
+                    {
+                        var agentId = Row.Long(agent, "id");
+                        var hostName = Row.Str(agent, "hostname");
+                        var online = EndpointRepository.IsOnline(agent);
+                        var hasPolicy = agent.ContainsKey("no_control_panel") && agent["no_control_panel"] is not null;
+                        var noControlPanel = Row.Bool(agent, "no_control_panel");
+                        var disableUsb = Row.Bool(agent, "disable_usb");
+                        var auditPaths = EndpointRepository.SplitPaths(Row.Str(agent, "audit_paths"));
+                        var lastSeen = Row.Str(agent, "last_seen_at");
+
+                        <tr>
+                            <td><strong>@hostName</strong></td>
+                            <td class="mono">@(string.IsNullOrEmpty(Row.Str(agent, "ip_address")) ? "—" : Row.Str(agent, "ip_address"))</td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(agent, "os_version")) ? "—" : Row.Str(agent, "os_version"))</td>
+                            <td>
+                                <span class="status @(online ? "online" : "offline")">
+                                    <span class="dot"></span>@(online ? "在线" : "离线")
+                                </span>
+                            </td>
+                            <td class="col-time">@(string.IsNullOrEmpty(lastSeen) ? "—" : lastSeen)</td>
+                            <td>
+                                @if (!hasPolicy)
+                                {
+                                    <span class="tag tag-off">未配置策略</span>
+                                }
+                                else
+                                {
+                                    <span class="tag @(noControlPanel ? "tag-on" : "tag-off")">控制面板@(noControlPanel ? "已禁用" : "未禁用")</span>
+                                    <span class="tag @(disableUsb ? "tag-on" : "tag-off")">USB@(disableUsb ? "已禁用" : "未禁用")</span>
+                                    <span class="tag">审计目录 @auditPaths.Count 个</span>
+                                }
+                            </td>
+                            <td>
+                                <a class="btn btn-sm" asp-page="/Policies" asp-route-agentId="@agentId">下发策略</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

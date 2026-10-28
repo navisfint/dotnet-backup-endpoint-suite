@@ -1,0 +1,89 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "概览";
+}
+
+<div class="page-header">
+    <div>
+        <h1>运行概览</h1>
+        <div class="subtitle">主机、任务与备份点的总体情况</div>
+    </div>
+    <div class="text-muted">@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</div>
+</div>
+
+<!-- 关键指标卡片：需求文档要求的概览四项 -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">主机数</div>
+        <div class="stat-value">@Model.HostCount<small>台</small></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">备份任务数</div>
+        <div class="stat-value">@Model.JobCount<small>个</small></div>
+    </div>
+    <div class="stat-card is-success">
+        <div class="stat-label">备份点数</div>
+        <div class="stat-value">@Model.PointCount<small>个</small></div>
+    </div>
+    <div class="stat-card is-warning">
+        <div class="stat-label">最近一次备份时间</div>
+        <div class="stat-value small">@(string.IsNullOrEmpty(Model.LatestBackupTime) ? "暂无成功备份" : Model.LatestBackupTime)</div>
+    </div>
+</div>
+
+<!-- 最近备份记录 -->
+<div class="card">
+    <div class="card-title">
+        <span>最近备份记录</span>
+        <a class="btn btn-ghost btn-sm" asp-page="/Points">查看全部备份点</a>
+    </div>
+
+    @if (Model.RecentPoints.Count == 0)
+    {
+        <div class="empty">
+            暂无备份记录。<br />
+            请先在「主机管理」中添加 Windows 主机对象，再到「备份任务」建立任务并点击「立即执行」。
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:150px;">开始时间</th>
+                        <th style="width:180px;">任务</th>
+                        <th style="width:110px;">主机</th>
+                        <th style="width:80px;">模式</th>
+                        <th style="width:90px;">状态</th>
+                        <th style="width:120px;">文件数</th>
+                        <th style="width:120px;">大小</th>
+                        <th style="width:110px;">耗时</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.RecentPoints)
+                    {
+                        var mode = Row.Int(item, "mode");
+                        var status = Row.Str(item, "status");
+                        <tr>
+                            <td class="col-time">@Row.Str(item, "started_at")</td>
+                            <td>@Row.Str(item, "job_name")</td>
+                            <td>@Row.Str(item, "host_name")</td>
+                            <td><span class="tag @Display.ModeCssClass(mode)">@Display.ModeName(mode)</span></td>
+                            <td>
+                                <span class="status @Display.StatusClass(status)">
+                                    <span class="dot"></span>@status
+                                </span>
+                            </td>
+                            <td>@Row.Long(item, "total_count") 个</td>
+                            <td>@Display.Size(Row.Long(item, "total_bytes"))</td>
+                            <td>@Display.Elapsed(Row.Double(item, "elapsed_seconds"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,64 @@
+@page
+@model LoginModel
+@{
+    // 登录页使用独立的整屏布局，不套用控制台顶部导航
+    Layout = null;
+    ViewData["Title"] = "登录";
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录 - @Branding.EndpointProductName</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <div class="login-page">
+        <!-- 左侧品牌区：产品名、版本、公司与系统能力说明 -->
+        <div class="login-brand">
+            <div class="login-logo">VaultGuard</div>
+            <h1>@Branding.EndpointProductName</h1>
+            <span class="login-version">@Branding.EndpointProductVersion</span>
+            <div class="login-company">@Branding.CompanyName</div>
+            <ul>
+                <li>终端接入注册与在线状态监控</li>
+                <li>终端行为管控策略统一下发</li>
+                <li>文件新建 / 修改 / 删除 / 重命名操作审计</li>
+                <li>按计算机对象与时间区间检索审计日志</li>
+            </ul>
+        </div>
+
+        <!-- 右侧表单区 -->
+        <div class="login-form-side">
+            <div class="login-box">
+                <h2>控制台登录</h2>
+                <div class="login-tip">请输入管理账号以进入终端安全管理控制台</div>
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-error">@Model.ErrorMessage</div>
+                }
+
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="form-field">
+                        <label for="UserName">用户名</label>
+                        <input id="UserName" type="text" name="UserName" value="@Model.UserName"
+                               autocomplete="username" autofocus />
+                    </div>
+                    <div class="form-field">
+                        <label for="Password">口令</label>
+                        <input id="Password" type="password" name="Password" autocomplete="current-password" />
+                    </div>
+                    <button type="submit" class="btn">登 录</button>
+                </form>
+
+                <div class="login-copyright">
+                    @Branding.Copyright
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

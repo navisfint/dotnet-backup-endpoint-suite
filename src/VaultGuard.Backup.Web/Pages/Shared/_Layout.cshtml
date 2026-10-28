@@ -1,0 +1,53 @@
+﻿@{
+    // 当前登录用户信息，供顶部导航右侧展示
+    var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
+    var displayName = User?.Identity?.Name ?? "";
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @Branding.BackupProductName</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="topbar-brand">
+                <span class="brand-mark">VaultGuard</span>
+                <span class="brand-title">@Branding.BackupProductName</span>
+                <span class="brand-version">@Branding.BackupProductVersion</span>
+            </div>
+
+            @if (isAuthenticated)
+            {
+                <nav class="topbar-nav">
+                    <a class="nav-link @(currentPage.Contains("/Index") ? "active" : "")" asp-page="/Index">概览</a>
+                    <a class="nav-link @(currentPage.Contains("/Hosts") ? "active" : "")" asp-page="/Hosts">主机管理</a>
+                    <a class="nav-link @(currentPage.Contains("/Jobs") ? "active" : "")" asp-page="/Jobs">备份任务</a>
+                    <a class="nav-link @(currentPage.Contains("/Points") || currentPage.Contains("/Restore") ? "active" : "")" asp-page="/Points">备份点</a>
+                    <a class="nav-link @(currentPage.Contains("/Logs") ? "active" : "")" asp-page="/Logs">操作日志</a>
+                </nav>
+
+                <div class="topbar-user">
+                    <span class="user-name">@displayName</span>
+                    <a class="logout" asp-page="/Logout">退出</a>
+                </div>
+            }
+        </div>
+    </header>
+
+    <main class="page">
+        @RenderBody()
+    </main>
+
+    <footer class="page-footer">
+        <div class="page-footer-inner">@Branding.Copyright</div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

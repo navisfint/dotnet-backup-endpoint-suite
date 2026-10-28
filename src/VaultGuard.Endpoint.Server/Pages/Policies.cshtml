@@ -1,0 +1,70 @@
+@page "{agentId:long}"
+@model PoliciesModel
+@{
+    ViewData["Title"] = "策略下发";
+}
+
+<div class="page-header">
+    <div>
+        <h1>策略下发 · @Model.HostName</h1>
+        <div class="subtitle">@Model.OsVersion　最后心跳：@(string.IsNullOrEmpty(Model.LastSeen) ? "—" : Model.LastSeen)</div>
+    </div>
+    <a class="btn btn-ghost" asp-page="/Agents">返回终端列表</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-ok">@Model.Message</div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="card">
+        <div class="card-title">电脑使用权限管控</div>
+
+        <div class="switch-list">
+            <label class="switch-item" for="NoControlPanel">
+                <input asp-for="NoControlPanel" type="checkbox" />
+                <span class="switch-text">
+                    <strong>禁用控制面板</strong>
+                    <span>勾选后终端将在当前用户策略中写入 NoControlPanel=1，控制面板立即不可用；取消勾选恢复。</span>
+                </span>
+            </label>
+
+            <label class="switch-item" for="DisableUsb">
+                <input asp-for="DisableUsb" type="checkbox" />
+                <span class="switch-text">
+                    <strong>禁用 USB 接口（存储设备）</strong>
+                    <span>勾选后终端将 USBSTOR 驱动启动类型置为禁用，U 盘等大容量存储设备无法识别；取消勾选恢复。该操作需要终端以管理员权限运行。</span>
+                </span>
+            </label>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">文件操作审计目录</div>
+
+        <div class="form-field">
+            <label for="AuditPathsText">需要监控的目录（每行一个，支持多个目录）</label>
+            <textarea id="AuditPathsText" name="AuditPathsText" rows="6"
+                      placeholder="例如：&#10;C:\重要资料&#10;D:\研发文档">@Model.AuditPathsText</textarea>
+            <div class="detail-line">
+                终端代理将对以上目录及其子目录进行监控，记录文件的新建、修改、删除、重命名四类操作。
+                目录不存在时该条监控会被自动跳过，不影响其他目录。
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">下发状态</div>
+        <div class="kv">
+            <div class="kv-item"><span class="kv-key">策略更新时间</span><strong>@(string.IsNullOrEmpty(Model.UpdatedAt) ? "尚未配置" : Model.UpdatedAt)</strong></div>
+            <div class="kv-item"><span class="kv-key">终端拉取时间</span><strong>@(string.IsNullOrEmpty(Model.AppliedAt) ? "尚未拉取" : Model.AppliedAt)</strong></div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">保存并下发</button>
+            <span class="text-muted">保存后终端将在下一次心跳（最长 30 秒）拉取并执行。</span>
+        </div>
+    </div>
+</form>

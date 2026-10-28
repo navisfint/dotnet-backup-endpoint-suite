@@ -1,0 +1,27 @@
+﻿@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "系统提示";
+}
+
+<div class="page-header">
+    <div>
+        <h1>操作未能完成</h1>
+        <div class="subtitle">系统在处理本次请求时遇到错误，请返回重试或联系管理员</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="alert alert-error">
+        当前请求未能正常处理。可返回上一页重新操作；若问题持续存在，请将下方请求编号提供给管理员以便排查。
+    </div>
+
+    @if (Model.ShowRequestId)
+    {
+        <div class="detail-line">请求编号：<span class="mono">@Model.RequestId</span></div>
+    }
+
+    <div class="form-actions">
+        <a class="btn" asp-page="/Index">返回概览</a>
+    </div>
+</div>

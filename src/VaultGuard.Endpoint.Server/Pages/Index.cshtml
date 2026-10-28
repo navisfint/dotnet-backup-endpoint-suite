@@ -1,0 +1,86 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "概览";
+}
+
+<div class="page-header">
+    <div>
+        <h1>运行概览</h1>
+        <div class="subtitle">终端接入状态与审计事件总体情况</div>
+    </div>
+    <div class="text-muted">@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</div>
+</div>
+
+<!-- 关键指标卡片 -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">终端总数</div>
+        <div class="stat-value">@Model.TotalAgents<small>台</small></div>
+    </div>
+    <div class="stat-card is-success">
+        <div class="stat-label">在线终端</div>
+        <div class="stat-value">@Model.OnlineAgents<small>台</small></div>
+    </div>
+    <div class="stat-card is-warning">
+        <div class="stat-label">已配置策略终端</div>
+        <div class="stat-value">@Model.PolicyAgents<small>台</small></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">今日审计事件</div>
+        <div class="stat-value">@Model.TodayEvents<small>条</small></div>
+    </div>
+</div>
+
+<!-- 今日事件分类 -->
+<div class="card">
+    <div class="card-title">今日事件分布</div>
+    <div class="kv">
+        <div class="kv-item"><span class="kv-key">新建</span><strong>@Model.TodayCreated</strong></div>
+        <div class="kv-item"><span class="kv-key">修改</span><strong>@Model.TodayModified</strong></div>
+        <div class="kv-item"><span class="kv-key">删除</span><strong>@Model.TodayDeleted</strong></div>
+        <div class="kv-item"><span class="kv-key">重命名</span><strong>@Model.TodayRenamed</strong></div>
+    </div>
+</div>
+
+<!-- 最近事件 -->
+<div class="card">
+    <div class="card-title">
+        <span>最近审计事件</span>
+        <a class="btn btn-ghost btn-sm" asp-page="/Events">查看全部</a>
+    </div>
+
+    @if (Model.RecentEvents.Count == 0)
+    {
+        <div class="empty">暂无审计事件。终端代理接入并配置审计目录后，事件将在此展示。</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:110px;">计算机</th>
+                        <th style="width:90px;">事件类型</th>
+                        <th>路径</th>
+                        <th style="width:150px;">操作者</th>
+                        <th style="width:160px;">发生时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.RecentEvents)
+                    {
+                        var type = Row.Str(item, "event_type");
+                        <tr>
+                            <td>@Row.Str(item, "hostname")</td>
+                            <td><span class="tag @EventDisplay.CssClass(type)">@type</span></td>
+                            <td class="path-cell">@Row.Str(item, "path")</td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(item, "user_name")) ? "—" : Row.Str(item, "user_name"))</td>
+                            <td class="col-time">@Row.Str(item, "occurred_at")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

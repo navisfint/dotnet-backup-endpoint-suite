@@ -1,0 +1,25 @@
+﻿@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "系统提示";
+}
+
+<div class="page-header">
+    <div>
+        <h1>系统提示</h1>
+        <div class="subtitle">处理请求时发生了未预期的错误</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="alert alert-error">请求未能正常完成，请稍后重试；若问题持续出现，请联系系统管理员。</div>
+
+    @if (Model.ShowRequestId)
+    {
+        <div class="detail-line">请求编号：<span class="mono">@Model.RequestId</span></div>
+    }
+
+    <div class="form-actions">
+        <a class="btn" asp-page="/Index">返回概览</a>
+    </div>
+</div>

@@ -1,0 +1,136 @@
+@page
+@model HostsModel
+@{
+    ViewData["Title"] = "主机管理";
+    var editing = Model.HostId > 0;
+}
+
+<div class="page-header">
+    <div>
+        <h1>主机管理</h1>
+        <div class="subtitle">共 @Model.Hosts.Count 个主机对象；口令以 AES-256-GCM 加密存储，数据库与页面均不出现明文</div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert @(Model.MessageKind == "error" ? "alert-error" : "alert-ok")">@Model.Message</div>
+}
+
+<!-- 主机对象列表 -->
+<div class="card">
+    <div class="card-title">主机对象列表</div>
+
+    @if (Model.Hosts.Count == 0)
+    {
+        <div class="empty">
+            暂无主机对象。请在下方填写主机名称与地址（本地目录、盘符或 UNC 共享路径）后新增。
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:170px;">名称</th>
+                        <th>地址</th>
+                        <th style="width:130px;">账号</th>
+                        <th style="width:110px;">状态</th>
+                        <th style="width:170px;">最近检测</th>
+                        <th style="width:250px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var host in Model.Hosts)
+                    {
+                        var hostId = Row.Long(host, "id");
+                        var status = Row.Str(host, "last_status");
+                        var checkAt = Row.Str(host, "last_check_at");
+                        <tr>
+                            <td><strong>@Row.Str(host, "name")</strong></td>
+                            <td class="path-cell">@Row.Str(host, "address")</td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(host, "username")) ? "—" : Row.Str(host, "username"))</td>
+                            <td>
+                                <span class="status @Display.HostStatusClass(status)">
+                                    <span class="dot"></span>@status
+                                </span>
+                            </td>
+                            <td class="col-time">@(string.IsNullOrEmpty(checkAt) ? "—" : checkAt)</td>
+                            <td class="actions">
+                                <form method="post" asp-page-handler="Check" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@hostId" />
+                                    <button type="submit" class="btn btn-sm btn-ghost">连通性检测</button>
+                                </form>
+                                <a class="btn btn-sm btn-ghost" asp-page="/Hosts" asp-route-id="@hostId">编辑</a>
+                                <form method="post" asp-page-handler="Delete" style="display:inline;"
+                                      onsubmit="return confirm('确定删除该主机对象？');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@hostId" />
+                                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- 新增 / 编辑表单 -->
+<div class="card">
+    <div class="card-title">@(editing ? $"编辑主机（编号 {Model.HostId}）" : "新增主机对象")</div>
+    <form method="post" asp-page-handler="@(editing ? "Update" : "Create")">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="HostId" value="@Model.HostId" />
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="HostName">主机名称</label>
+                <input id="HostName" type="text" name="HostName" value="@Model.HostName" placeholder="例如：财务部-文件服务器" />
+            </div>
+            <div class="form-field">
+                <label for="Address">主机地址</label>
+                <input id="Address" type="text" name="Address" value="@Model.Address"
+                       placeholder="D:\财务资料 或 \\192.168.1.20\share" />
+            </div>
+            <div class="form-field narrow">
+                <label for="OsType">操作系统</label>
+                <select id="OsType" name="OsType">
+                    <option value="windows" selected="@(Model.OsType == "windows" ? "selected" : null)">Windows</option>
+                    <option value="other" selected="@(Model.OsType == "other" ? "selected" : null)">其它</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-field">
+                <label for="UserName">访问账号</label>
+                <input id="UserName" type="text" name="UserName" value="@Model.UserName" placeholder="访问 UNC 共享所用账号，可留空" />
+            </div>
+            <div class="form-field">
+                <label for="Password">访问口令</label>
+                <input id="Password" type="password" name="Password" autocomplete="new-password"
+                       placeholder="@(editing ? "留空表示保持原密码不变" : "访问口令，可留空")" />
+            </div>
+            <div class="form-field">
+                <label for="Remark">备注</label>
+                <input id="Remark" type="text" name="Remark" value="@Model.Remark" placeholder="可选" />
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn">@(editing ? "保存修改" : "新增主机")</button>
+            @if (editing)
+            {
+                <a class="btn btn-ghost" asp-page="/Hosts">取消编辑</a>
+            }
+        </div>
+        <div class="form-hint" style="margin-top:10px;">
+            提示：地址填本地目录（如 D:\财务资料）时按本地路径检测；填 UNC 共享（如 \\192.168.1.20\share）时，
+            连通性检测与备份都会先用此处保存的账号口令建立网络会话，用完即断开。
+        </div>
+    </form>
+</div>

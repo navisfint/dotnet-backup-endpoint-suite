@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{64211D39-0DC7-4CBB-8DD6-E1F5A9FCD858}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultGuard.Common", "src\VaultGuard.Common\VaultGuard.Common.csproj", "{336A0336-2C18-442B-A591-646B0EF44EBF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultGuard.Backup.Web", "src\VaultGuard.Backup.Web\VaultGuard.Backup.Web.csproj", "{0505100B-95F5-47AB-BEBF-2F559FEA1F93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultGuard.Endpoint.Server", "src\VaultGuard.Endpoint.Server\VaultGuard.Endpoint.Server.csproj", "{C9A10C2D-2C73-40AC-8497-A14561985DDA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaultGuard.Endpoint.Agent", "src\VaultGuard.Endpoint.Agent\VaultGuard.Endpoint.Agent.csproj", "{34B56937-0E2D-4799-8164-D455BC7D2BD5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{336A0336-2C18-442B-A591-646B0EF44EBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{336A0336-2C18-442B-A591-646B0EF44EBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{336A0336-2C18-442B-A591-646B0EF44EBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{336A0336-2C18-442B-A591-646B0EF44EBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0505100B-95F5-47AB-BEBF-2F559FEA1F93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0505100B-95F5-47AB-BEBF-2F559FEA1F93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0505100B-95F5-47AB-BEBF-2F559FEA1F93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0505100B-95F5-47AB-BEBF-2F559FEA1F93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9A10C2D-2C73-40AC-8497-A14561985DDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9A10C2D-2C73-40AC-8497-A14561985DDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9A10C2D-2C73-40AC-8497-A14561985DDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9A10C2D-2C73-40AC-8497-A14561985DDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34B56937-0E2D-4799-8164-D455BC7D2BD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34B56937-0E2D-4799-8164-D455BC7D2BD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34B56937-0E2D-4799-8164-D455BC7D2BD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34B56937-0E2D-4799-8164-D455BC7D2BD5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{336A0336-2C18-442B-A591-646B0EF44EBF} = {64211D39-0DC7-4CBB-8DD6-E1F5A9FCD858}
+		{0505100B-95F5-47AB-BEBF-2F559FEA1F93} = {64211D39-0DC7-4CBB-8DD6-E1F5A9FCD858}
+		{C9A10C2D-2C73-40AC-8497-A14561985DDA} = {64211D39-0DC7-4CBB-8DD6-E1F5A9FCD858}
+		{34B56937-0E2D-4799-8164-D455BC7D2BD5} = {64211D39-0DC7-4CBB-8DD6-E1F5A9FCD858}
+	EndGlobalSection
+EndGlobal

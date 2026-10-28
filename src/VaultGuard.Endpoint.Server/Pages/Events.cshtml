@@ -1,0 +1,155 @@
+@page
+@model EventsModel
+@{
+    ViewData["Title"] = "审计日志";
+
+    // 生成分页链接时保留当前全部筛选条件
+    // 说明：页码参数名为 pageIndex 而非 page，"page" 是 Razor Pages 的保留路由键
+    string BuildLink(int pageNumber)
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrEmpty(Model.Host)) { query.Add("host=" + Uri.EscapeDataString(Model.Host)); }
+        if (!string.IsNullOrEmpty(Model.EventType)) { query.Add("type=" + Uri.EscapeDataString(Model.EventType)); }
+        if (!string.IsNullOrEmpty(Model.Keyword)) { query.Add("keyword=" + Uri.EscapeDataString(Model.Keyword)); }
+        if (Model.FromDate.HasValue) { query.Add("from=" + Model.FromDate.Value.ToString("yyyy-MM-dd")); }
+        if (Model.ToDate.HasValue) { query.Add("to=" + Model.ToDate.Value.ToString("yyyy-MM-dd")); }
+        query.Add("pageIndex=" + pageNumber);
+        return "/Events?" + string.Join("&", query);
+    }
+
+    // 页码窗口：当前页前后各 2 页
+    var startPage = Math.Max(1, Model.CurrentPage - 2);
+    var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+}
+
+<div class="page-header">
+    <div>
+        <h1>审计日志查询</h1>
+        <div class="subtitle">按计算机对象与时间区间检索文件操作记录（新建 / 修改 / 删除 / 重命名），每页 @EventsModel.PageSize 条</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">查询条件</div>
+    <form method="get">
+        <div class="form-row">
+            <div class="form-field">
+                <label for="host">计算机对象</label>
+                <select id="host" name="host">
+                    <option value="">全部计算机</option>
+                    @foreach (var host in Model.HostOptions)
+                    {
+                        <option value="@host" selected="@(host == Model.Host ? "selected" : null)">@host</option>
+                    }
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="type">事件类型</label>
+                <select id="type" name="type">
+                    <option value="">全部类型</option>
+                    @foreach (var type in Model.TypeOptions)
+                    {
+                        <option value="@type" selected="@(type == Model.EventType ? "selected" : null)">@type</option>
+                    }
+                </select>
+            </div>
+            <div class="form-field narrow">
+                <label for="from">起始日期</label>
+                <input id="from" type="date" name="from" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="form-field narrow">
+                <label for="to">结束日期</label>
+                <input id="to" type="date" name="to" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="form-field">
+                <label for="keyword">路径关键字</label>
+                <input id="keyword" type="text" name="keyword" value="@Model.Keyword" placeholder="文件名或路径片段" />
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">查询</button>
+            <a class="btn btn-ghost" asp-page="/Events">重置</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-title">
+        <span>查询结果（共 @Model.Total 条）</span>
+        <span class="text-muted">第 @Model.CurrentPage / @Model.TotalPages 页</span>
+    </div>
+
+    @if (Model.Events.Count == 0)
+    {
+        <div class="empty">没有符合条件的审计记录，请调整查询条件后重试。</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:150px;">计算机</th>
+                        <th style="width:90px;">事件类型</th>
+                        <th>路径</th>
+                        <th style="width:180px;">目标路径</th>
+                        <th style="width:150px;">操作者</th>
+                        <th style="width:160px;">发生时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Events)
+                    {
+                        var type = Row.Str(item, "event_type");
+                        <tr>
+                            <td>@Row.Str(item, "hostname")</td>
+                            <td><span class="tag @EventDisplay.CssClass(type)">@type</span></td>
+                            <td class="path-cell">@Row.Str(item, "path")</td>
+                            <td class="path-cell">@(string.IsNullOrEmpty(Row.Str(item, "target_path")) ? "—" : Row.Str(item, "target_path"))</td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(item, "user_name")) ? "—" : Row.Str(item, "user_name"))</td>
+                            <td class="col-time">@Row.Str(item, "occurred_at")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pager">
+            <span class="pager-info">共 @Model.Total 条记录，每页 @EventsModel.PageSize 条</span>
+
+            @if (Model.CurrentPage > 1)
+            {
+                <a href="@BuildLink(1)">首页</a>
+                <a href="@BuildLink(Model.CurrentPage - 1)">上一页</a>
+            }
+            else
+            {
+                <span class="disabled">首页</span>
+                <span class="disabled">上一页</span>
+            }
+
+            @for (var p = startPage; p <= endPage; p++)
+            {
+                if (p == Model.CurrentPage)
+                {
+                    <span class="current">@p</span>
+                }
+                else
+                {
+                    <a href="@BuildLink(p)">@p</a>
+                }
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a href="@BuildLink(Model.CurrentPage + 1)">下一页</a>
+                <a href="@BuildLink(Model.TotalPages)">末页</a>
+            }
+            else
+            {
+                <span class="disabled">下一页</span>
+                <span class="disabled">末页</span>
+            }
+        </div>
+    }
+</div>

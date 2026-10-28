@@ -1,0 +1,81 @@
+@page
+@model PointsModel
+@{
+    ViewData["Title"] = "备份点";
+}
+
+<div class="page-header">
+    <div>
+        <h1>备份点</h1>
+        <div class="subtitle">共 @Model.Points.Count 个备份点；每个备份点都是一份该时间点的完整逻辑视图</div>
+    </div>
+    <a class="btn btn-ghost" asp-page="/Jobs">返回任务列表</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    var cls = Model.MessageKind == "error" ? "alert-error" : (Model.MessageKind == "warn" ? "alert-warn" : "alert-ok");
+    <div class="alert @cls">@Model.Message</div>
+}
+
+<div class="card">
+    <div class="card-title">备份点列表</div>
+
+    @if (Model.Points.Count == 0)
+    {
+        <div class="empty">
+            暂无备份点。请在「备份任务」中点击「立即执行」生成第一个备份点。
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th style="width:155px;">开始时间</th>
+                        <th style="width:170px;">任务</th>
+                        <th style="width:100px;">主机</th>
+                        <th style="width:80px;">模式</th>
+                        <th style="width:90px;">状态</th>
+                        <th style="width:150px;">文件数（逻辑 / 本次复制）</th>
+                        <th style="width:100px;">大小</th>
+                        <th style="width:100px;">耗时</th>
+                        <th style="width:170px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var point in Model.Points)
+                    {
+                        var pointId = Row.Long(point, "id");
+                        var mode = Row.Int(point, "mode");
+                        var status = Row.Str(point, "status");
+                        var message = Row.Str(point, "message");
+                        <tr>
+                            <td class="col-time">@Row.Str(point, "started_at")</td>
+                            <td>@Row.Str(point, "job_name")</td>
+                            <td>@(string.IsNullOrEmpty(Row.Str(point, "host_name")) ? "—" : Row.Str(point, "host_name"))</td>
+                            <td><span class="tag @Display.ModeCssClass(mode)">@Display.ModeName(mode)</span></td>
+                            <td>
+                                <span class="status @Display.StatusClass(status)">
+                                    <span class="dot"></span>@status
+                                </span>
+                                @if (status == "失败" && !string.IsNullOrEmpty(message))
+                                {
+                                    <div class="form-hint">@message</div>
+                                }
+                            </td>
+                            <td>@Row.Long(point, "total_count") / @Row.Long(point, "copied_count")</td>
+                            <td>@Display.Size(Row.Long(point, "total_bytes"))</td>
+                            <td>@Display.Elapsed(Row.Double(point, "elapsed_seconds"))</td>
+                            <td class="actions">
+                                <a class="btn btn-sm btn-ghost" asp-page="/Restore" asp-route-pointId="@pointId">浏览文件</a>
+                                <a class="btn btn-sm" asp-page="/Restore" asp-route-pointId="@pointId">还原</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

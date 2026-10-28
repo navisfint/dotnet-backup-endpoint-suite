@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <!-- 目标框架为 net8.0-windows：终端管控需要访问 Windows 注册表等本机 API -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-VaultGuard.Endpoint.Agent-01dfa78c-6834-4b2a-8f80-247d973314d6</UserSecretsId>
+    <RootNamespace>VaultGuard.Endpoint.Agent</RootNamespace>
+    <AssemblyName>VaultGuard.Endpoint.Agent</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <!-- UseWindowsService：使同一份程序既可作为控制台运行，也可注册为 Windows 服务 -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
+    <!-- IHttpClientFactory：统一管理与控制端通信的 HttpClient -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VaultGuard.Common\VaultGuard.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 配置文件随程序一起输出，保证发布目录可直接运行 -->
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,48 @@
+﻿@{
+    // 当前登录用户信息，供顶部导航右侧展示
+    var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
+    var displayName = User?.Identity?.Name ?? "";
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @Branding.EndpointProductName</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="topbar-brand">
+                <span class="brand-mark">VaultGuard</span>
+                <span class="brand-title">@Branding.EndpointProductName</span>
+                <span class="brand-version">@Branding.EndpointProductVersion</span>
+            </div>
+
+            @if (isAuthenticated)
+            {
+                <nav class="topbar-nav">
+                    <a class="nav-link @(currentPage.Contains("/Index") ? "active" : "")" asp-page="/Index">概览</a>
+                    <a class="nav-link @(currentPage.Contains("/Agents") || currentPage.Contains("/Policies") ? "active" : "")" asp-page="/Agents">终端管理</a>
+                    <a class="nav-link @(currentPage.Contains("/Events") ? "active" : "")" asp-page="/Events">审计日志</a>
+                </nav>
+
+                <div class="topbar-user">
+                    <span class="user-name">@displayName</span>
+                    <a class="logout" asp-page="/Logout">退出</a>
+                </div>
+            }
+        </div>
+    </header>
+
+    <main class="page">
+        @RenderBody()
+    </main>
+
+    <footer class="page-footer">
+        <div class="page-footer-inner">@Branding.Copyright</div>
+    </footer>
+</body>
+</html>

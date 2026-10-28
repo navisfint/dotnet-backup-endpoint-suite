@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- 系统一：虚拟化数据备份还原系统（B/S 控制台）
+       目标框架选用 net8.0-windows：备份远程 UNC 共享时需要 P/Invoke 调用 mpr.dll
+       的 WNetAddConnection2 / WNetCancelConnection2 建立凭据会话，故必须是 Windows 目标。 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- 仅托管代码调用 Win32 API，无需开启不安全代码；CS1591 不适用于本项目（全部公开成员已写注释） -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 页面模型与视图统一引用服务层命名空间，避免每个文件重复书写 -->
+    <Using Include="VaultGuard.Backup.Web.Services" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VaultGuard.Common\VaultGuard.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 备份数据压缩组件（MIT 许可），使用其 CompressionStream / DecompressionStream -->
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.8" />
+  </ItemGroup>
+
+</Project>
